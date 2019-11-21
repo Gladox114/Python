@@ -1,6 +1,6 @@
 """
 made by Gladox114
-
+https://github.com/Gladox114/Python/blob/master/Snake/SnakeV3/
 """
 import tkinter as tk
 
