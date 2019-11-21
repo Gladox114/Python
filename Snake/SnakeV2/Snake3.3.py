@@ -54,7 +54,7 @@ def pos(x,y):
 	Y2=Y+Block
 	return X,Y,X2,Y2
 	
-def checkb(listd,a,b,c,d):  # a is X position and c and d are to test if its equal to the next bubble body
+def checkb(listd,a,b,c,d):  # a is the body testing if its equal to b the second body and c and d are the direction or Position to the next bubble body
 	if listd[a][0]+1*c==listd[b][0]:
 		#print("Very Long text here so how se goeng?")
 		x = (listd[a][0]*Block)+(Block/2)
@@ -81,47 +81,50 @@ def checkb(listd,a,b,c,d):  # a is X position and c and d are to test if its equ
 	return True,(x,y,x2,y2)
 
 # -------- Drawing Snake ---------
-
-def drawSnake():
-	c.itemconfig("snake",fill="black",outline="black")
+lastBlockChain=0
+def drawSnake2():
+	global lastBlockChain
+	global ChainLen
+	c.itemconfig("snake"+str(lastBlockChain),fill="black",outline="black")
+	lastBlockChain+=1
+	print("Removing snake"+str(lastBlockChain))
 	global Block
 	snapcolor = "white"
 	if len(snake) > 1:
-		# Close that stuff under this text. It was an old Idea and bad
-		"""
-		for i in range(len(snake)-1):
-			if snake[i][0]+1==snake[i+1][0]:
-				x=(snake[i][0]*Block)+(Block/2)
-				y=(snake[i][1]*Block)
-				x2=x+Block
-				y2=y+Block
-			elif snake[i][0]-1==snake[i+1][0]:
-				x=(snake[i][0]*Block)+(Block/2)
-				y=(snake[i][1]*Block)
-				x2=x-Block
-				y2=y+Block
-			elif snake[i][1]+1==snake[i+1][1]:
-				x=(snake[i][0]*Block)
-				y=(snake[i][1]*Block)+(Block/2)
-				x2=x+Block
-				y2=y+Block
-			elif snake[i][1]-1==snake[i+1][1]:
-				x=(snake[i][0]*Block)
-				y=(snake[i][1]*Block)+(Block/2)
-				x2=x+Block
-				y2=y-Block
-			else:
-				if snake[i][0]+abs(MapChunks[0]-MapChunks[2])==snake[i+1][0]:
-					x=(snake[i][0]*Block)+(Block/2)
-					y=(snake[i][1]*Block)
-					x2=x-Block/2
-					y2=y+Block
-					c.create_rectangle(x,y,x2,y2,fill="gray",outline="gray",tags="snake")
-					
-				else:
-					continue
-			c.create_rectangle(x,y,x2,y2,fill="gray",outline="gray",tags="snake")
-			"""
+		i = len(snake)-1
+		a,coord = checkb(snake,i,i-1,1,-1) # Check for body behind
+		if a==True: # If the above is going through a wall then
+			c.create_rectangle(coord,fill=snapcolor,outline=snapcolor,tags="snake"+str(i+ChainLen))
+			print("Adding: snake"+str(i+ChainLen))
+		else: # put rectangles through
+			number = abs(MapChunks[0]-MapChunks[2])
+			coord = checkb(snake,i,i-1,-number,number)[1]
+			c.create_rectangle(coord,fill=snapcolor,outline=snapcolor,tags="snake"+str(i+ChainLen))
+			print("Adding: snake"+str(i+ChainLen))
+		
+		a,coord = checkb(snake,i-1,i,1,-1) # Check at one boddy before the last one for body in front
+		if a==True: # If the above is going through a wall then
+			c.create_rectangle(coord,fill=snapcolor,outline=snapcolor,tags="snake"+str(i+ChainLen))
+			print("Adding: snake"+str(i+ChainLen))
+		else: # put rectangles through
+			number = abs(MapChunks[0]-MapChunks[2])
+			coord=checkb(snake,i-1,i,-number,number)[1]
+			c.create_rectangle(coord,fill=snapcolor,outline=snapcolor,tags="snake"+str(i+ChainLen))
+			print("Adding: snake"+str(i+ChainLen))
+		c.create_oval(pos(snake[i][0],snake[i][1]),fill="lightblue",outline="lightblue",tags="snake"+str(i+ChainLen))
+		c.create_oval(pos(snake[i-1][0],snake[i-1][1]),fill="lightblue",outline="lightblue",tags="snake"+str(i+ChainLen))
+		print("Adding: snake"+str(i+ChainLen))
+		ChainLen+=1
+		print(len(snake))
+	
+	
+ChainLen = 0
+"""
+def drawSnake():
+	global Block
+	global ChainLen
+	snapcolor = "white"
+	if len(snake) > 1:
 		for i in range(len(snake)):
 			if i != 0 and i != len(snake)-1:
 				#print(i,len(snake))
@@ -130,42 +133,50 @@ def drawSnake():
 				
 				a,coord = checkb(snake,i,i-1,1,-1) # Check for body behind
 				if a==True: # If the above is going through a wall then
-					c.create_rectangle(coord,fill=snapcolor,outline=snapcolor,tags="snake")
+					c.create_rectangle(coord,fill=snapcolor,outline=snapcolor,tags="snake"+str(i+ChainLen))
+					print("Adding: snake"+str(i+ChainLen))
 				else: # put rectangles through
 					number = abs(MapChunks[0]-MapChunks[2])
 					coord = checkb(snake,i,i-1,-number,number)[1]
-					c.create_rectangle(coord,fill=snapcolor,outline=snapcolor,tags="snake")
-						
+					c.create_rectangle(coord,fill=snapcolor,outline=snapcolor,tags="snake"+str(i+ChainLen))
+					print("Adding: snake"+str(i+ChainLen))	
 						
 						
 				a,coord = checkb(snake,i,i+1,1,-1) # Check for body in front
 				if a==True: # If the above is going through a wall then
-					c.create_rectangle(coord,fill=snapcolor,outline=snapcolor,tags="snake")
+					c.create_rectangle(coord,fill=snapcolor,outline=snapcolor,tags="snake"+str(i+ChainLen))
+					print("Adding: snake"+str(i+ChainLen))
 				else: # put rectangles through
 					number = abs(MapChunks[0]-MapChunks[2])
 					coord=checkb(snake,i,i+1,-number,number)[1]
-					c.create_rectangle(coord,fill=snapcolor,outline=snapcolor,tags="snake")
+					c.create_rectangle(coord,fill=snapcolor,outline=snapcolor,tags="snake"+str(i+ChainLen))
+					print("Adding: snake"+str(i+ChainLen))
 			# -------- Body Last----
 			elif i==0: 
 				a,coord = checkb(snake,i,i+1,1,-1) # Check for body in front
 				if a==True: # If the above is going through a wall then
-					c.create_rectangle(coord,fill=snapcolor,outline=snapcolor,tags="snake")
+					c.create_rectangle(coord,fill=snapcolor,outline=snapcolor,tags="snake"+str(i+ChainLen))
+					print("Adding: snake"+str(i+ChainLen))
 				else: # put rectangles through
 					number = abs(MapChunks[0]-MapChunks[2])
 					coord=checkb(snake,i,i+1,-number,number)[1]
-					c.create_rectangle(coord,fill=snapcolor,outline=snapcolor,tags="snake")
+					c.create_rectangle(coord,fill=snapcolor,outline=snapcolor,tags="snake"+str(i+ChainLen))
+					print("Adding: snake"+str(i+ChainLen))
 			else:
 				a,coord = checkb(snake,i,i-1,1,-1) # Check for body behind
 				if a==True: # If the above is going through a wall then
-					c.create_rectangle(coord,fill=snapcolor,outline=snapcolor,tags="snake")
+					c.create_rectangle(coord,fill=snapcolor,outline=snapcolor,tags="snake"+str(i+ChainLen))
+					print("Adding: snake"+str(i+ChainLen))
 				else: # put rectangles through
 					number = abs(MapChunks[0]-MapChunks[2])
 					coord = checkb(snake,i,i-1,-number,number)[1]
-					c.create_rectangle(coord,fill=snapcolor,outline=snapcolor,tags="snake")
-				
+					c.create_rectangle(coord,fill=snapcolor,outline=snapcolor,tags="snake"+str(i+ChainLen))
+					print("Adding: snake"+str(i+ChainLen))
+			
 	for i in range(len(snake)):
-		c.create_oval(pos(snake[i][0],snake[i][1]),fill="lightblue",outline="lightblue",tags="snake")
-
+		c.create_oval(pos(snake[i][0],snake[i][1]),fill="lightblue",outline="lightblue",tags="snake"+str(i+ChainLen))
+	ChainLen=0
+"""
 # --------------------------------
 def Food():
 	if food != []:
@@ -329,7 +340,7 @@ def tick():
 	global Pop
 	global lose
 	move(joydir)
-	drawSnake()
+	drawSnake2()
 	if checkFood()==True:
 		Pop=False
 	if checkCollision()==True:
