@@ -1,6 +1,6 @@
 """
 Made By Gladox114
-
+https://github.com/Gladox114/Python/blob/master/Snake/SnakeV3/
 """
 
 from PIL import Image, ImageTk
