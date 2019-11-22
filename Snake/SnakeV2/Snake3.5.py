@@ -6,7 +6,7 @@ import tkinter as tk
 import copy
 
 class Map:
-	def __init__(self, master=None, width=500, height=500, color="black", offset=10, Block=20, MapAreaX=500, MapAreaY=500,FrameColor="pink"):
+	def __init__(self, master=None, width=500, height=500, color="black", offset=10, Block=20,FrameColor="pink",FrameColor2="red"):
 		self.master = master
 		self.width = width
 		self.height = height
@@ -15,6 +15,7 @@ class Map:
 		self.FrameColor = FrameColor
 		self.Block = Block
 		self.MapArea = width,height
+		self.FrameColor2 = FrameColor2
 		#print("init",self.MapArea,MapAreaX,MapAreaY)
 		self.food=[]
 		self.MapChunks=(0,0,int(self.MapArea[0]/self.Block-1),int(self.MapArea[1]/self.Block-1))
@@ -27,7 +28,7 @@ class Map:
 		self.f = tk.Canvas(self.canvas,bg=self.color,height=self.MapArea[1]+2,width=self.MapArea[0]+2,highlightthickness=0)
 		self.f.pack() # Create smaller Canvas in Canvas
 		self.f.place(x=self.offset,y=self.offset) # and offset it 
-		self.f.create_rectangle(0,0,self.MapArea[1]+1,self.MapArea[0]+1,outline="red",fill=self.color) # Create a Rectangle 
+		self.f.create_rectangle(0,0,self.MapArea[1]+1,self.MapArea[0]+1,outline=self.FrameColor2,fill=self.color) # Create a Rectangle 
 		self.c = tk.Canvas(self.canvas,bg=self.color,height=self.MapArea[1],width=self.MapArea[0],highlightthickness=0)
 		self.c.place(x=11,y=11)
 		self.frame2 = tk.Frame(self.master,bg="gray",height=15)
@@ -103,9 +104,28 @@ class Map:
 		return True,(x,y,x2,y2)	
 	
 	def drawSnake(self,snake):
-		self.c.itemconfig("snake"+str(id(snake)+snake.lastBlockChain),fill="black",outline="black")
+		#if len(snake.body)!=snake.bodyLen: #or len(snake.body)==snake.bodyLen+1:
+			#difference=abs(snake.bodyLen-len(snake.body))
+			#snake.lastBlockChain-=difference
+			#snake.bodyLen=len(snake.body)
+		
+		if len(snake.body)==snake.bodyLen+1:
+			snake.bodyLen+=1
+			#snake.lastBlockChain-=1
+			self.c.itemconfig("snake"+str(id(snake)+snake.lastBlockChain),fill="black",outline="black")
+		else:
+			self.c.itemconfig("snake"+str(id(snake)+snake.lastBlockChain),fill="black",outline="black")
+			#print("Removing snake"+str(id(snake)+snake.lastBlockChain))
+			
+		#self.c.itemconfig("snake"+str(id(snake)+snake.lastBlockChain),fill="black",outline="black")
 		snake.lastBlockChain+=1
-		#print("Removing snake"+str(id(snake)+snake.lastBlockChain))
+		
+		print("lastblockchain",snake.lastBlockChain)
+		print("bodyLen1:",snake.bodyLen)
+		print("Body1:",len(snake.body))
+		
+		
+
 		#self.snapColor = "white"
 		if len(snake.body) > 1:
 			i = len(snake.body)-1
@@ -139,9 +159,16 @@ class Map:
 			self.c.create_oval(self.pos(snake.body[i][0],snake.body[i][1]),fill=snake.bodyColor,outline=snake.bodyColor,tags="snake"+str(id(snake)+i+snake.ChainLen))
 			self.c.create_oval(self.pos(snake.body[i-1][0],snake.body[i-1][1]),fill=snake.bodyColor,outline=snake.bodyColor,tags="snake"+str(id(snake)+i+snake.ChainLen))
 			#print("Adding: snake"+str(i+snake.ChainLen))
-			snake.ChainLen+=1		# If you Playing to loong then it will get a long number and it could maybe lag. If not then I did nothing wrong.
-			#print(str(id(snake)+i+snake.ChainLen))
+			snake.ChainLen+=1		# If you Playing to loong then it will get a long number and it could maybe lag. If not then I did nothing wrong. else... i would need to reset the number after a time or length
+			print("CHainlen"+str(id(snake)+i+snake.ChainLen),str(snake.ChainLen+i))
 		
+		
+	def removeSnake(self,snake):
+		for i in range(0,len(snake.body)+snake.ChainLen):
+			self.c.itemconfig("snake"+str(id(snake)+snake.lastBlockChain),fill="black",outline="black")
+			#snake.lastBlockChain+=1
+			
+			
 	def placeFood(self,*food):
 		if food: self.food = food
 		if self.food != []:
@@ -152,7 +179,7 @@ class Map:
 			self.food = randomFood()
 # ------------------------------
 class Snake():
-	def __init__(self, Map, Name, body, Joystick, borderbool, direction, snapColor="white", bodyColor="lightblue"):
+	def __init__(self, Map, Name, body, Joystick, borderbool, direction, snapColor="white", bodyColor="lightblue",growLen=4):
 		super().__init__()
 		self.Map = Map
 		self.Name = Name
@@ -167,7 +194,10 @@ class Snake():
 		self.bodyColor=bodyColor
 		self.lastBlockChain = 0
 		self.ChainLen = 0
+		self.counter = 0
+		self.growLen = growLen
 		self.startBody = copy.deepcopy(body)
+		self.bodyLen = len(self.body)
 		#print(self.startBody)
 		self.startDir = copy.copy(direction)
 		self.lose=False
@@ -213,7 +243,11 @@ class Snake():
 		if self.Pop==True:
 			#print(x)
 			self.body.pop(x)
-		else: self.Pop = True
+		else: 
+			self.counter+=1
+			if self.counter > self.growLen-1:
+				self.Pop = True
+				self.counter=0
 		
 	def move(self,direction):
 		#print("lastDir:",self.lastdirection)
@@ -312,14 +346,19 @@ def collision(body,head): # If Head in a Body part (Other Player or Itself) then
 
 
 
-
-
+###########################################################
+# ----------------------- Settings -----------------------#
 root = tk.Tk()
-Area=Map(root,1500,500,"black",10,20,1500,500) # Creating Object from Class Map
+# Master, X,Y,Background color,Offset (Thickness of the Frame), Block thickness, Frame Color, Thin Frame Color
+Area=Map(root,500,500,"black",10,10,"pink","white") # Creating Object from Class Map
 Area.BuildMap() # Building the Map once
+# Map, Player Name, Body, which Joystick, enable/disable Border, start direction, snapcolor, bodycolor, growLength (How long the snake gets after eating food)(Don't go over 2 or 5... It's not perfect... It's maybe buggy)
+Player1 = Snake(Area,"Jeff",[[6,6],[5,6],[4,6],[3,6]],1,False,"left","white","lightblue",3)
+Player2 = Snake(Area,"Felix",[[2,2],[3,2],[4,2],[5,2]],2,False,"left","yellow","purple",3)
+# --------------------------------------------------------#
+###########################################################                     
 
-Player1 = Snake(Area,"Player1",[[6,6],[5,6],[4,6],[3,6]],1,False,"left",)
-Player2 = Snake(Area,"Player2",[[2,2],[3,2],[4,2],[5,2]],2,False,"left","yellow","purple")
+
 Playerslist=[Player1,Player2]
 Players=[Player1,Player2]
 
@@ -357,8 +396,9 @@ def start(remove=False): # Main
 				if collision(i.body,Player.body[-1]): # Check if Player Collides with other Player
 					if remove==False: Area.drawCollision(Player.body[-1])
 					Player.lose=True
-				if collision(i.body[-1],Player.body[-1]):
+				if i.body[-1]==Player.body[-1]:
 					if remove==False: Area.drawCollision(Player.body[-1])
+					print(i.Name,Player.Name)
 					i.lose=True
 					Player.lose=True
 			else: 
@@ -368,10 +408,14 @@ def start(remove=False): # Main
 						Player.lose=True
 		for i in Players:
 			if i.lose:
-				losePlayer(i,Players,remove)
+				for z in range(len(Players)):
+					if Players[z].lose: print(Players[z].Name,Players[z].lose)
 				i.score-=1
 				Area.text(i)
-		
+				print(i.Name,i.score)
+		for i in Players:
+			if i.lose: losePlayer(i,Players,remove)
+			
 		if len(Players)<2:
 			stop=True
 		
@@ -396,6 +440,7 @@ def restartScreen():
 		i.lastdirection = i.startDir
 		i.JoyDirection = i.startDir
 		i.lose=False
+		i.bodyLen=len(i.body)
 	#c=Area.getCanvas()[0]
 	#frame=Area.getCanvas()[1]
 	Area.frame.pack_forget()
