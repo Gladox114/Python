@@ -17,36 +17,44 @@ class Map:
 		self.MapArea = width,height
 		#print("init",self.MapArea,MapAreaX,MapAreaY)
 		self.food=[]
+		self.MapChunks=(0,0,int(self.MapArea[0]/self.Block-1),int(self.MapArea[1]/self.Block-1))
 		
 	def BuildMap(self):
 		self.frame = tk.Frame(self.master,height=self.MapArea[1]+(self.offset*2)-1,width=self.MapArea[0]+(self.offset*2)-1)
-		self.frame.pack(fill="both",expand="true")
+		self.frame.pack(fill="both",expand="true") # Create a Frame
 		self.canvas = tk.Canvas(self.frame,bg=self.FrameColor,height=self.MapArea[1]+(self.offset*2)-1,width=self.MapArea[0]+(self.offset*2)-1)
-		self.canvas.pack(fill="both",expand="true")
+		self.canvas.pack(fill="both",expand="true") # Create Canvas inside the Frame
 		self.f = tk.Canvas(self.canvas,bg=self.color,height=self.MapArea[1]+2,width=self.MapArea[0]+2,highlightthickness=0)
-		self.f.pack()
-		self.f.place(x=self.offset,y=self.offset)
-		self.f.create_rectangle(0,0,self.MapArea[1]+1,self.MapArea[0]+1,outline=self.color,fill=self.color)
+		self.f.pack() # Create smaller Canvas in Canvas
+		self.f.place(x=self.offset,y=self.offset) # and offset it 
+		self.f.create_rectangle(0,0,self.MapArea[1]+1,self.MapArea[0]+1,outline="red",fill=self.color) # Create a Rectangle 
 		self.c = tk.Canvas(self.canvas,bg=self.color,height=self.MapArea[1],width=self.MapArea[0],highlightthickness=0)
 		self.c.place(x=11,y=11)
-		self.frame2 = tk.Frame(self.master,bg="blue",height=15)
+		self.frame2 = tk.Frame(self.master,bg="gray",height=15)
 		self.frame2.pack(fill="both",expand="true",side="bottom")
+		self.frame3 = tk.Frame(self.frame2,bg="gray",height=15)
+		self.frame3.place(relx=.5, rely=.5,anchor="center")
 		"""
 		self.v = tk.StringVar(value="Default Value")
 		self.Label = tk.Label(self.frame2,textvariable=self.v)
 		self.Label.pack(side="bottom")
 		self.v.set("Score:")
-"""
+"""	
 	def setScores(self,Players):
-		self.Label=[]
-		self.v = []
-		for i in range(Players):
-			self.v[i] = tk.StringVar()
-			self.Label[i] = tk.Label(self.frame2,textvariable=self.v[i])
-			self.v[i].set("Player"+i+" Score: 0")
+		self.Label={}
+		self.v = {}
+		for i in range(len(Players)):
+			self.v[Players[i].Name] = tk.StringVar(value="Default Value")
+			self.Label[i] = tk.Label(self.frame3,bg="gray",textvariable=self.v[Players[i].Name])
+			self.Label[i].grid(row=1, column=i)
+			self.Label[i].grid_rowconfigure(0, weight=1)
+			self.Label[i].grid_rowconfigure(2, weight=1)
+			self.Label[i].grid_columnconfigure(0, weight=1)
+			self.Label[i].grid_columnconfigure(2, weight=1)
+			self.v[Players[i].Name].set(Players[i].Name+":"+str(Players[i].score))
 			
-	def text(self,var):
-		self.v.set(str("Score:"+str(var)))
+	def text(self,Player):
+		self.v[Player.Name].set(str(Player.Name+":"+str(Player.score)))
 
 	def drawCollision(self,pos,color1="red"):
 		x,y=pos
@@ -144,9 +152,10 @@ class Map:
 			self.food = randomFood()
 # ------------------------------
 class Snake():
-	def __init__(self, Map, body, Joystick, borderbool, direction, snapColor="white", bodyColor="lightblue"):
+	def __init__(self, Map, Name, body, Joystick, borderbool, direction, snapColor="white", bodyColor="lightblue"):
 		super().__init__()
 		self.Map = Map
+		self.Name = Name
 		self.body = body
 		self.Joystick = Joystick
 		self.Pop = True
@@ -165,7 +174,7 @@ class Snake():
 		#print(self.MapArea,self.Block)
 		#print(self.Map.MapArea[0:2],int(self.Map.MapArea[0]/self.Map.Block-1))
 		#print(int(self.Map.MapArea[1]/self.Map.Block-1))
-		self.MapChunks=(0,0,int(self.Map.MapArea[0]/self.Map.Block-1),int(self.Map.MapArea[1]/self.Map.Block-1))
+		self.MapChunks = self.Map.MapChunks
 		#print(self.MapChunks[0:4])
 		if self.borderbool==False: # Setting the Border Function
 			self.border=self.borderOff
@@ -261,29 +270,32 @@ def getdir(x,*y):
 import random
 def randomFood(Player,someList): # not tested
 	localMap = []
-	for x in range(0,Player.MapChunks[2]+1):
-		for y in range(0,Player.MapChunks[3]+1):
+	for x in range(0,Area.MapChunks[2]+1):
+		for y in range(0,Area.MapChunks[3]+1):
 			localMap+=[[x,y]]
 	for i in someList:
-		localMap.remove(i)
+		try: localMap.remove(i)
+		except ValueError:
+			Print("error")
 	return localMap[random.randint(0,len(localMap)-1)]
 
-def checkFood(Map,Player,Players): # not tested
+def checkFood(Map,Players=None,Player=None): # not tested
 	if Map.food!=[]:
-		if Player.body[-1]==Map.food:
-			Player.score+=1
-			Map.text(Player.score)
-			someList=[]
-			for i in Players:
-				for z in i.body:
-					x,y=z
-					someList+=[[x,y]]
-			Map.food = randomFood(Player,someList)
-			Player.Pop=False
-			print(Map.food)
-			Area.placeFood()
-			return True
-		else: return False
+		if Player:
+			if Player.body[-1]==Map.food:
+				Player.score+=1
+				Map.text(Player)
+				someList=[]
+				for i in Players:
+					for z in i.body:
+						x,y=z
+						someList+=[[x,y]]
+				Map.food = randomFood(Player,someList)
+				Player.Pop=False
+				print(Map.food)
+				Area.placeFood()
+				return True
+			else: return False
 	else:
 		someList=[]
 		for i in Players:
@@ -306,8 +318,8 @@ root = tk.Tk()
 Area=Map(root,1500,500,"black",10,20,1500,500) # Creating Object from Class Map
 Area.BuildMap() # Building the Map once
 
-Player1 = Snake(Area,[[6,6],[5,6],[4,6],[3,6]],1,False,"left")
-Player2 = Snake(Area,[[2,2],[3,2],[4,2],[5,2]],2,False,"right","yellow","purple")
+Player1 = Snake(Area,"Player1",[[6,6],[5,6],[4,6],[3,6]],1,False,"left",)
+Player2 = Snake(Area,"Player2",[[2,2],[3,2],[4,2],[5,2]],2,False,"left","yellow","purple")
 Playerslist=[Player1,Player2]
 Players=[Player1,Player2]
 
@@ -339,23 +351,34 @@ def start(remove=False): # Main
 	for Player in Players: # Executing it for each Player
 		Player.move(Player.JoyDirection) 
 		Area.drawSnake(Player)
-		checkFood(Area,Player,Players)
+		checkFood(Area,Players,Player)
 		for i in Players: # For each Player again
 			if i!=Player: # Not the Player itself
 				if collision(i.body,Player.body[-1]): # Check if Player Collides with other Player
 					if remove==False: Area.drawCollision(Player.body[-1])
+					Player.lose=True
+				if collision(i.body[-1],Player.body[-1]):
+					if remove==False: Area.drawCollision(Player.body[-1])
+					i.lose=True
 					Player.lose=True
 			else: 
 				if len(Player.body) > 4: # Check if Player Collides with itself
 					if collision(i.body[0:-2],Player.body[-1]):
 						if remove==False: Area.drawCollision(Player.body[-1]) 
 						Player.lose=True
-		if Player.lose:
-			losePlayer(Player,Players,remove)
-			#stop=True
-		#print(Player.body)
+		for i in Players:
+			if i.lose:
+				losePlayer(i,Players,remove)
+				i.score-=1
+				Area.text(i)
+		
 		if len(Players)<2:
 			stop=True
+		
+
+		#stop=True
+	#print(Player.body)
+
 
 		
 	if stop==False: root.after(100,start)
@@ -374,15 +397,21 @@ def restartScreen():
 		i.JoyDirection = i.startDir
 		i.lose=False
 	#c=Area.getCanvas()[0]
-	frame=Area.getCanvas()[1]
-	frame.pack_forget()
+	#frame=Area.getCanvas()[1]
+	Area.frame.pack_forget()
+	Area.frame2.pack_forget()
+	Area.frame3.pack_forget()
+	#for i in range(len(Area.Label)):
+	#	Area.Label[i].pack_forget()
+	
 	Area.BuildMap()
+	Area.setScores(Players)
 	stop=False
 	Area.food=[]
-	checkFood()
+	checkFood(Area,Players)
 	start()
 	Input()
-Area.setScores(len(Playerslist))
+Area.setScores(Players)
 Area.food=[5,5]
 Area.placeFood()
 stop=False
